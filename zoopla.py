@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-from collections import OrderedDict
+from collections import Counter,OrderedDict
+import json
 import sys
 import codecs
 sys.stdout = codecs.getwriter('utf8')(sys.stdout)
@@ -35,13 +36,15 @@ def propertyListings(**kwargs):
         ordering='ascending',
         page_size=100,
         **kwargs))
-    print r.text
+    with codecs.open('response.xml', 'w', 'utf-8') as f:
+        f.write(r.text)
     root = etree.XML(r.text.encode('utf-8'))
     scraperwiki.sql.execute('drop table if exists House')
     scraperwiki.sql.execute('drop table if exists property')
-    for e in root.xpath('/response/listing')[0]:
-      print e.tag
+    allTags = Counter()
     for el in root.xpath('/response/listing'):
+      for subel in el:
+        allTags[subel.tag] +=1
       d = OrderedDict()
       for tag in ['listing_id', 'price', 'image_url',
         'displayable_address',
@@ -55,6 +58,8 @@ def propertyListings(**kwargs):
         d[tag] = subTagText(el, tag)
       if d['listing_id']:
         scraperwiki.sql.save(['listing_id'], d, table_name='House')
+    with open('xmltags.json', 'w') as f:
+        json.dump(allTags, f)
 
 def main(argv=None):
     if argv is None:
