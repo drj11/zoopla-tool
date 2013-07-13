@@ -10,7 +10,6 @@ from lxml import etree
 import scraperwiki
 
 ZOOPLA_KEY = open("tool/zoopla.key").read().strip()
-POSTCODE = sys.argv[1]
 
 def subTagText(element, tag):
     """Get the descendent of *element* with *tag*;
@@ -27,14 +26,15 @@ def subTagText(element, tag):
         pass
     return sub.text
 
-def propertyListings():
+def propertyListings(**kwargs):
     r = requests.get("http://api.zoopla.co.uk/api/v1/property_listings",
       params=dict(api_key=ZOOPLA_KEY,
-        postcode=POSTCODE, radius=1.2,
+        radius=1.2,
         property_type='houses',
         listing_status='sale',
         ordering='ascending',
-        page_size=100))
+        page_size=100,
+        **kwargs))
     print r.text
     root = etree.XML(r.text.encode('utf-8'))
     scraperwiki.sql.execute('drop table if exists House')
@@ -56,8 +56,11 @@ def propertyListings():
       if d['listing_id']:
         scraperwiki.sql.save(['listing_id'], d, table_name='House')
 
-def main():
-    propertyListings()
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
+    postcode = argv[1]
+    propertyListings(postcode=postcode)
 
 if __name__ == '__main__':
     main()
