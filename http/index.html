@@ -20,6 +20,7 @@
             var q = $('#q').val()
             scraperwiki.exec("tool/zoopla.py " + scraperwiki.shellEscape(q),
               execSuccess)
+            scraperwiki.tool.rename("Houses near " + q)
           })
       })
     </script>
