@@ -14,11 +14,14 @@ ZOOPLA_KEY = open("tool/zoopla.key").read().strip()
 
 def subTagText(element, tag):
     """Get the descendent of *element* with *tag*;
-    return its text."""
+    return its text. If there is more than one descendent
+    with that tag, return the text of the first one.
+    If no descendent, or the descendent is empty, returns None.
+    """
     subs = element.xpath('./' + tag)
     if not subs:
         return None
-    sub, = subs
+    sub = subs[0]
     if sub is None:
         return None
     try:
@@ -38,7 +41,14 @@ def propertyListings(**kwargs):
         **kwargs))
     with codecs.open('response.xml', 'w', 'utf-8') as f:
         f.write(r.text)
-    root = etree.XML(r.text.encode('utf-8'))
+
+    propertyListingsFromString(r.text.encode('utf-8'))
+
+def propertyListingsFromString(response):
+    """Save the list of properties. Takes the XML response
+    as a python string (not unicode)."""
+
+    root = etree.XML(response)
     scraperwiki.sql.execute('drop table if exists House')
     scraperwiki.sql.execute('drop table if exists property')
     allTags = Counter()
@@ -50,10 +60,14 @@ def propertyListings(**kwargs):
         'displayable_address',
         'details_url',
         'latitude', 'longitude', 'short_description',
+        'floor_plan',
         'num_bedrooms',
         'num_bathrooms',
         # 'num_floors', # Always 0
-        'num_recepts']:
+        'num_recepts',
+        'outcode',
+        'first_published_date'
+        ]:
 
         d[tag] = subTagText(el, tag)
       if d['listing_id']:
