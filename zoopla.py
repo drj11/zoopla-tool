@@ -62,9 +62,15 @@ def propertyListings(**kwargs):
         json.dump(allTags, f)
 
 def main(argv=None):
+    import getopt
     if argv is None:
         argv = sys.argv
-    postcode = argv[1]
+    opts,arg = getopt.getopt(argv[1:], '', ['xml='])
+    for o,v in opts:
+        if o == '--xml':
+            propertyListingsFromString(open(v).read())
+            return
+    postcode = arg[0]
     propertyListings(postcode=postcode)
 
 if __name__ == '__main__':
